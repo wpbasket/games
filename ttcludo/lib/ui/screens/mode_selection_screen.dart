@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../engine/ludo_models.dart';
 import '../theme/ludo_colors.dart';
+import '../theme/app_feedback.dart';
 import 'game_screen.dart';
 
 class ModeSelectionScreen extends StatefulWidget {
@@ -73,6 +75,8 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
+      useRootNavigator: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -85,18 +89,21 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
             final botCount = seatStates.values.where((s) => s.isBot).length;
             final isValid = activeCount >= 2;
 
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            return SafeArea(
+              top: false,
+              bottom: true,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 16,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     Center(
                       child: Container(
                         width: 44,
@@ -243,25 +250,29 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
                       const Text('Bot AI Difficulty',
                           style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
                       const SizedBox(height: 6),
-                      Row(
-                        children: BotDifficulty.values.map((diff) {
-                          final isSelected = selectedDifficulty == diff;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: ChoiceChip(
-                              label: Text(diff.label, style: const TextStyle(fontSize: 11)),
-                              selected: isSelected,
-                              selectedColor: const Color(0xFF1E88E5).withValues(alpha: 0.2),
-                              onSelected: (val) {
-                                if (val) {
-                                  setModalState(() {
-                                    selectedDifficulty = diff;
-                                  });
-                                }
-                              },
-                            ),
-                          );
-                        }).toList(),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: BotDifficulty.values.map((diff) {
+                            final isSelected = selectedDifficulty == diff;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ChoiceChip(
+                                label: Text(diff.label, style: const TextStyle(fontSize: 11)),
+                                selected: isSelected,
+                                selectedColor: const Color(0xFF1E88E5).withValues(alpha: 0.2),
+                                onSelected: (val) {
+                                  if (val) {
+                                    AppFeedback.selection();
+                                    setModalState(() {
+                                      selectedDifficulty = diff;
+                                    });
+                                  }
+                                },
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                       const SizedBox(height: 8),
                     ],
@@ -278,10 +289,12 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
                           children: [
                             Icon(Icons.warning_amber_rounded, size: 16, color: Color(0xFFE53935)),
                             SizedBox(width: 6),
-                            Text(
-                              'Please activate at least 2 seats to play a match.',
-                              style: TextStyle(
-                                  fontSize: 12, color: Color(0xFFE53935), fontWeight: FontWeight.w600),
+                            Expanded(
+                              child: Text(
+                                'Please activate at least 2 seats to play a match.',
+                                style: TextStyle(
+                                    fontSize: 12, color: Color(0xFFE53935), fontWeight: FontWeight.w600),
+                              ),
                             ),
                           ],
                         ),
@@ -292,7 +305,7 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
                     SizedBox(
                       width: double.infinity,
                       height: 50,
-                      child: ElevatedButton(
+                      child: FilledButton(
                         onPressed: isValid
                             ? () {
                                 Navigator.pop(ctx);
@@ -320,26 +333,29 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
                                 );
                               }
                             : null,
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFF1E88E5),
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: Colors.grey.shade300,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          elevation: isValid ? 2 : 0,
+                          elevation: 0,
+                          splashFactory: NoSplash.splashFactory,
                         ),
                         child: Text(
                           isValid ? 'Start $activeCount-Player Match' : 'Select at least 2 Players',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-            );
-          },
-        );
-      },
+            ),
+          );
+        },
+      );
+    },
     );
   }
 
@@ -349,21 +365,23 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
     required Color activeColor,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-        decoration: BoxDecoration(
-          color: selected ? activeColor : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: selected ? FontWeight.bold : FontWeight.w500,
-            color: selected ? Colors.white : Colors.black54,
+    return Material(
+      color: selected ? activeColor : Colors.grey.shade100,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        splashFactory: NoSplash.splashFactory,
+        highlightColor: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+              color: selected ? Colors.white : Colors.black87,
+            ),
           ),
         ),
       ),
@@ -373,13 +391,21 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
   void _showRulesDialog() {
     showDialog(
       context: context,
+      useSafeArea: true,
+      useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
             Icon(Icons.menu_book_rounded, color: Color(0xFF1E88E5)),
             SizedBox(width: 8),
-            Text('Ludo Rules & Edge Cases'),
+            Expanded(
+              child: Text(
+                'Ludo Rules & Edge Cases',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         content: const SingleChildScrollView(
@@ -414,7 +440,10 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () {
+              AppFeedback.click();
+              Navigator.pop(ctx);
+            },
             child: const Text('Got it'),
           ),
         ],
@@ -424,95 +453,112 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline_rounded, color: Colors.black87),
-            tooltip: 'Rules & Combinations',
-            onPressed: _showRulesDialog,
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Logo / Graphic
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFE53935), Color(0xFF1E88E5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: LudoColors.systemUiStyle,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F7FB),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          systemOverlayStyle: LudoColors.systemUiStyle,
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                icon: const Icon(Icons.help_outline_rounded, color: Colors.black87),
+                tooltip: 'Rules & Combinations',
+                onPressed: () {
+                  AppFeedback.click();
+                  _showRulesDialog();
+                },
+              ),
+            ),
+          ],
+        ),
+        body: SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // RepaintBoundary isolates the static top logo and title during scroll
+                RepaintBoundary(
+                  child: Column(
+                    children: [
+                      // Logo / Graphic
+                      Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFE53935), Color(0xFF1E88E5)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1E88E5).withValues(alpha: 0.35),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.casino_rounded,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      const Text(
+                        'ttcLudo',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          color: Color(0xFF1A1A2E),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '2, 3, or 4 Players • All Human vs Bot Combinations Supported',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF1E88E5).withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+                ),
+                const SizedBox(height: 20),
+
+                // Custom Match Builder Button (Prominent Material 3 FilledButton)
+                Container(
+                  width: double.infinity,
+                  height: 52,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: FilledButton.icon(
+                    onPressed: _showCustomSetupModal,
+                    icon: const Icon(Icons.tune_rounded, size: 20),
+                    label: const Text(
+                      'Custom Match Builder (All Combinations)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                     ),
-                  ],
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.casino_rounded,
-                    color: Colors.white,
-                    size: 40,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF1E88E5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 0,
+                      splashFactory: NoSplash.splashFactory,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              const Text(
-                'ttcLudo',
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5,
-                  color: Color(0xFF1A1A2E),
-                ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                '2, 3, or 4 Players • All Human vs Bot Combinations Supported',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Custom Match Builder Button (Prominent)
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 16),
-                child: ElevatedButton.icon(
-                  onPressed: _showCustomSetupModal,
-                  icon: const Icon(Icons.tune_rounded, size: 20),
-                  label: const Text(
-                    'Custom Match Builder (All Combinations)',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E88E5),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 3,
-                  ),
-                ),
-              ),
 
               const Row(
                 children: [
@@ -537,92 +583,96 @@ class _ModeSelectionScreenState extends State<ModeSelectionScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildModeCard(GameModeConfig config) {
-    return Container(
+    return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: Colors.white,
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.08),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: () => _startGame(config),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                // Icon Avatar
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E88E5).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Center(
-                    child: Icon(
-                      config.icon,
-                      color: const Color(0xFF1E88E5),
-                      size: 24,
-                    ),
+        side: BorderSide(color: Colors.black.withValues(alpha: 0.06)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        splashFactory: NoSplash.splashFactory,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.black.withValues(alpha: 0.03),
+        onTap: () => _startGame(config),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              // Icon Avatar
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E88E5).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Center(
+                  child: Icon(
+                    config.icon,
+                    color: const Color(0xFF1E88E5),
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: 14),
+              ),
+              const SizedBox(width: 14),
 
-                // Title & Subtitle
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              config.title,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1A1A2E),
-                              ),
+              // Title & Subtitle
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            config.title,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1A2E),
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${config.activePlayerCount}P',
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        config.subtitle,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.black54,
                         ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${config.activePlayerCount}P',
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      config.subtitle,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.black54,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
 
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: Colors.black38,
-                ),
-              ],
-            ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: Colors.black38,
+              ),
+            ],
           ),
         ),
       ),

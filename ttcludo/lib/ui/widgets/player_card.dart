@@ -80,80 +80,90 @@ class PlayerCardWidget extends StatelessWidget {
             const SizedBox(width: 8),
 
             // Player Name & Type
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      player.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                        height: 1.1,
-                        color: isCurrentTurn ? color : const Color(0xFF263238),
-                      ),
-                    ),
-                    if (player.type == PlayerType.bot) ...[
-                      const SizedBox(width: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'BOT',
-                          style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.black54),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 1),
-                // Pawn Progress Pill (Home Count)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.home, size: 11, color: color),
-                    const SizedBox(width: 2),
-                    Text(
-                      '${player.finishedPawnsCount}/4',
-                      style: TextStyle(
-                        fontSize: 9.5,
-                        height: 1.1,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                    if (isCurrentTurn) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: lightColor,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: SizedBox(
-                          width: 42,
-                          child: Text(
-                            isRolling ? 'Roll...' : 'Active',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                              color: color,
-                            ),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          player.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                            height: 1.1,
+                            color: isCurrentTurn ? color : const Color(0xFF263238),
                           ),
                         ),
                       ),
+                      if (player.type == PlayerType.bot) ...[
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'BOT',
+                            style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.black54),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 1),
+                  // Pawn Progress Pill (Home Count)
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const NeverScrollableScrollPhysics(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.home, size: 11, color: color),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${player.finishedPawnsCount}/4',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            height: 1.1,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        if (isCurrentTurn) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: lightColor,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: SizedBox(
+                              width: 42,
+                              child: Text(
+                                isRolling ? 'Roll...' : 'Active',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                  color: color,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

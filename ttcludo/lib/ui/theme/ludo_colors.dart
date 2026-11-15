@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../engine/ludo_models.dart';
 
 class LudoColors {
+  // Edge-to-edge system UI style for light background:
+  // Both top status bar icons and bottom navigation bar buttons are dark/black
+  static const SystemUiOverlayStyle systemUiStyle = SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
+    systemStatusBarContrastEnforced: false,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.dark,
+    systemNavigationBarContrastEnforced: false,
+  );
+
   // Red Palette
   static const Color red = Color(0xFFE53935);
   static const Color redLight = Color(0xFFFFEBEE);

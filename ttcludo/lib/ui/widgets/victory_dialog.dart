@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../engine/ludo_models.dart';
 import '../theme/ludo_colors.dart';
+import '../theme/app_feedback.dart';
 
 class VictoryDialog extends StatelessWidget {
   final List<Player> players;
@@ -166,7 +167,10 @@ class VictoryDialog extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: onMainMenu,
+                    onPressed: () {
+                      AppFeedback.click();
+                      onMainMenu();
+                    },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -177,7 +181,10 @@ class VictoryDialog extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: onPlayAgain,
+                    onPressed: () {
+                      AppFeedback.click();
+                      onPlayAgain();
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: winThemeColor,
                       foregroundColor: Colors.white,

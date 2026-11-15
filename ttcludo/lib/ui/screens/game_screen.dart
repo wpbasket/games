@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../engine/ludo_models.dart';
 import '../../engine/board_coordinates.dart';
 import '../../engine/ludo_engine.dart';
@@ -8,6 +9,7 @@ import '../widgets/animated_pawn.dart';
 import '../widgets/dice_3d_widget.dart';
 import '../widgets/player_card.dart';
 import '../widgets/victory_dialog.dart';
+import '../theme/app_feedback.dart';
 
 class GameScreen extends StatefulWidget {
   final GameModeConfig config;
@@ -100,6 +102,8 @@ class _GameScreenState extends State<GameScreen> {
         showDialog(
           context: context,
           barrierDismissible: false,
+          useSafeArea: true,
+          useRootNavigator: true,
           builder: (ctx) => VictoryDialog(
             players: _engine.players,
             winners: _engine.winners,
@@ -130,17 +134,23 @@ class _GameScreenState extends State<GameScreen> {
   void _restartGame() {
     showDialog(
       context: context,
+      useSafeArea: true,
+      useRootNavigator: true,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Restart Match?'),
         content: const Text('Are you sure you want to restart this match from the beginning?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () {
+              AppFeedback.click();
+              Navigator.pop(ctx);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
+              AppFeedback.click();
               Navigator.pop(ctx);
               setState(() {
                 _victoryDialogShown = false;
@@ -212,59 +222,84 @@ class _GameScreenState extends State<GameScreen> {
       pawnsAtCoord.putIfAbsent(coord, () => []).add(pawn);
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F6),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.config.title,
-              style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            Text(
-              '${_engine.players.length} Players Active • ${_engine.isSpectatorMode ? "AI Spectator" : "Offline"}',
-              style: const TextStyle(color: Colors.black54, fontSize: 11),
-            ),
-          ],
-        ),
-        actions: [
-          // AI Speed Multiplier button (1x, 2x, 4x)
-          PopupMenuButton<double>(
-            tooltip: 'Game Speed',
-            icon: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.black12),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: LudoColors.systemUiStyle,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF0F2F6),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          systemOverlayStyle: LudoColors.systemUiStyle,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
+            onPressed: () {
+              AppFeedback.click();
+              Navigator.pop(context);
+            },
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.config.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    Text(
+                      '${_engine.players.length} Players Active • ${_engine.isSpectatorMode ? "AI Spectator" : "Offline"}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.black54, fontSize: 11),
+                    ),
+                  ],
+                ),
               ),
-              child: Text(
-                '${_engine.botSpeedMultiplier.toInt()}x',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87),
-              ),
-            ),
-            onSelected: (speed) => _engine.setBotSpeedMultiplier(speed),
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 1.0, child: Text('1x Normal Speed')),
-              const PopupMenuItem(value: 2.0, child: Text('2x Fast Speed')),
-              const PopupMenuItem(value: 4.0, child: Text('4x Ultra Speed')),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.black87),
-            tooltip: 'Restart Match',
-            onPressed: _restartGame,
-          ),
-        ],
+          actions: [
+            // AI Speed Multiplier button (1x, 2x, 4x)
+            PopupMenuButton<double>(
+              tooltip: 'Game Speed',
+              icon: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.black12),
+                ),
+                child: Text(
+                  '${_engine.botSpeedMultiplier.toInt()}x',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black87),
+                ),
+              ),
+              onSelected: (speed) {
+                AppFeedback.selection();
+                _engine.setBotSpeedMultiplier(speed);
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(value: 1.0, child: Text('1x Normal Speed')),
+                const PopupMenuItem(value: 2.0, child: Text('2x Fast Speed')),
+                const PopupMenuItem(value: 4.0, child: Text('4x Ultra Speed')),
+              ],
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: Colors.black87),
+              tooltip: 'Restart Match',
+              onPressed: () {
+                AppFeedback.click();
+                _restartGame();
+              },
+            ),
+          ],
       ),
       body: SafeArea(
+        top: false,
+        bottom: true,
         child: Column(
           children: [
             // Top HUD: dynamically reflects screen Top-Left and Top-Right
@@ -275,8 +310,9 @@ class _GameScreenState extends State<GameScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSeatWidget(_getCornerColor(isTop: true, isLeft: true), activePlayer),
-                    _buildSeatWidget(_getCornerColor(isTop: true, isLeft: false), activePlayer),
+                    Flexible(child: _buildSeatWidget(_getCornerColor(isTop: true, isLeft: true), activePlayer)),
+                    const SizedBox(width: 8),
+                    Flexible(child: _buildSeatWidget(_getCornerColor(isTop: true, isLeft: false), activePlayer)),
                   ],
                 ),
               ),
@@ -367,8 +403,9 @@ class _GameScreenState extends State<GameScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSeatWidget(_getCornerColor(isTop: false, isLeft: true), activePlayer),
-                    _buildSeatWidget(_getCornerColor(isTop: false, isLeft: false), activePlayer),
+                    Flexible(child: _buildSeatWidget(_getCornerColor(isTop: false, isLeft: true), activePlayer)),
+                    const SizedBox(width: 8),
+                    Flexible(child: _buildSeatWidget(_getCornerColor(isTop: false, isLeft: false), activePlayer)),
                   ],
                 ),
               ),
@@ -443,8 +480,9 @@ class _GameScreenState extends State<GameScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildActionButton(Player activePlayer, Color activeColor) {
     if (_engine.phase == TurnPhase.waitingForRoll) {
@@ -456,6 +494,7 @@ class _GameScreenState extends State<GameScreen> {
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
+          splashFactory: NoSplash.splashFactory,
         ),
         child: const Text(
           'ROLL',
@@ -473,6 +512,7 @@ class _GameScreenState extends State<GameScreen> {
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
+          splashFactory: NoSplash.splashFactory,
         ),
         child: const Text(
           'ROLL...',
@@ -493,6 +533,7 @@ class _GameScreenState extends State<GameScreen> {
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
+          splashFactory: NoSplash.splashFactory,
         ),
         child: const Text(
           'MOVE',

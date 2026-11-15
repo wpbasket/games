@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../ui/theme/app_feedback.dart';
 import 'ludo_models.dart';
 import 'board_coordinates.dart';
 import 'bot_ai.dart';
@@ -211,11 +212,7 @@ class LudoEngine extends ChangeNotifier {
     _phase = TurnPhase.rollingDice;
     notifyListeners();
     onDiceRollStart?.call();
-
-    // Haptic feedback
-    try {
-      HapticFeedback.lightImpact();
-    } catch (_) {}
+    AppFeedback.diceRoll();
 
     // Simulated rolling physics delay
     await Future.delayed(Duration(milliseconds: _scaledDelay(500)));
@@ -228,9 +225,7 @@ class LudoEngine extends ChangeNotifier {
 
     if (_diceValue == 6) {
       _consecutiveSixes++;
-      try {
-        HapticFeedback.mediumImpact();
-      } catch (_) {}
+      AppFeedback.six();
     } else {
       _consecutiveSixes = 0;
     }
@@ -324,6 +319,13 @@ class LudoEngine extends ChangeNotifier {
     final fromStep = pawn.step;
     final int toStep = pawn.isInBase ? 0 : pawn.step + _diceValue;
 
+    // Authentic Ludo sound: pawn unlocking from yard vs stepping on track
+    if (fromStep == -1) {
+      AppFeedback.pawnEntry();
+    } else {
+      AppFeedback.pawnStep();
+    }
+
     // Update pawn step
     pawn.step = toStep;
 
@@ -347,9 +349,7 @@ class LudoEngine extends ChangeNotifier {
                 oppPawn.step = -1; // Send back to base yard
                 capturedEnemy = true;
                 bonusReason = 'Captured ${opp.name}\'s pawn! Earns extra roll.';
-                try {
-                  HapticFeedback.heavyImpact();
-                } catch (_) {}
+                AppFeedback.capture();
                 onCapture?.call();
               }
             }
@@ -362,9 +362,7 @@ class LudoEngine extends ChangeNotifier {
     if (toStep == 56) {
       reachedHome = true;
       bonusReason = 'Reached home! Earns extra roll.';
-      try {
-        HapticFeedback.heavyImpact();
-      } catch (_) {}
+      AppFeedback.homeReached();
       onHomeReached?.call();
 
       // Check if this player has finished all 4 pawns
@@ -388,6 +386,7 @@ class LudoEngine extends ChangeNotifier {
     // Check Game Over condition (when remaining unfinished players <= 1)
     if (_checkGameOver()) {
       _phase = TurnPhase.gameOver;
+      AppFeedback.homeReached();
       final winner = _players.firstWhere((p) => p.rank == 1, orElse: () => _players.first);
       _statusMessage = _isYou(winner)
           ? 'Game Over! You won!'
